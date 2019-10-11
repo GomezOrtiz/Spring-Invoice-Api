@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.fakecorp.invoicing.api.mapper.ClientMapper">
+	
+	<resultMap id="client" type="com.fakecorp.invoicing.api.model.Client">
+        <id column="clientId" property="id"/>
+        <result column="clientName" property="name"/>
+        <result column="clientSurname" property="surname"/>
+        <result column="clientEmail" property="email"/>
+        <result column="clientCreatedAt" property="createdAt"/>
+        <result column="clientUpdatedAt" property="updatedAt"/>
+        <collection property="invoices" ofType="arraylist" resultMap="invoice"/>
+    </resultMap>
+    
+    <resultMap id="invoice" type="com.fakecorp.invoicing.api.model.Invoice">
+        <id column="invoiceId" property="id"/>
+        <result column="invoiceDescription" property="description"/>
+        <result column="invoiceDetails" property="details"/>
+        <result column="invoiceTotal" property="total"/>
+        <result column="invoiceCreatedAt" property="createdAt"/>
+    </resultMap>
+    
+    <sql id="selectClient">
+		SELECT
+		c.id clientId,
+		c.name clientName,
+		c.surname clientSurname,
+		c.email clientEmail,
+		c.created_at clientCreatedAt,
+		c.updated_at clientUpdatedAt,
+		i.id invoiceId, 
+		i.description invoiceDescription, 
+		i.details invoiceDetails, 
+		i.total invoiceTotal,
+		i.created_at invoiceCreatedAt
+		FROM clients c
+		LEFT JOIN invoices i ON i.client_id = c.id
+	</sql>
+	
+	<select id="findAll" resultMap="client">
+		<include refid="selectClient" />
+	</select>
+	
+	<select id="findById" resultMap="client">
+		<include refid="selectClient" />
+		WHERE c.id = #{id}
+	</select>
+	
+	<select id="findByName" resultMap="client">
+		<include refid="selectClient" />
+		WHERE UPPER(c.name) LIKE UPPER(#{name})
+	</select>
+
+	<insert id="insert">
+		INSERT INTO clients(id, name, surname, email, created_at, updated_at)
+		VALUES(
+		#{client.id},
+		#{client.name},
+		#{client.surname},
+		#{client.email},
+		#{client.createdAt},
+		#{client.updatedAt}
+		)
+	</insert>
+	
+	<update id="update">
+        UPDATE clients
+          <set>
+              <if test="client.name != null and client.name != ''">name = #{client.name},</if>
+              <if test="client.surname != null and client.surname != ''">surname = #{client.surname},</if>
+              <if test="client.email != null and client.email != ''">email = #{client.email},</if>
+              updated_at = #{client.updatedAt}
+          </set>
+        WHERE id = #{client.id}	
+    </update>
+    
+    <delete id="delete">
+        DELETE FROM clients WHERE id = #{id}
+    </delete>
+    
+
+</mapper>

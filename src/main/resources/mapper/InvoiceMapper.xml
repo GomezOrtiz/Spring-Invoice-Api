@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.fakecorp.invoicing.api.mapper.InvoiceMapper">
+	
+	<resultMap id="invoice" type="com.fakecorp.invoicing.api.model.Invoice">
+        <id column="invoiceId" property="id"/>
+        <result column="invoiceDescription" property="description"/>
+        <result column="invoiceDetails" property="details"/>
+        <result column="invoiceTotal" property="total"/>
+        <result column="invoiceCreatedAt" property="createdAt"/>
+        <association column="invoiceClient" property="client" javaType="com.fakecorp.invoicing.api.model.Client" resultMap="client"></association>
+        <collection property="items" ofType="arraylist" resultMap="invoiceItem"/>
+    </resultMap>
+    
+    <resultMap id="client" type="com.fakecorp.invoicing.api.model.Client">
+        <id column="clientId" property="id"/>
+    </resultMap>
+    
+    <resultMap id="invoiceItem" type="com.fakecorp.invoicing.api.model.InvoiceItem">
+        <id column="itemId" property="id"/>
+        <result column="itemAmount" property="amount"/>
+        <association column="itemInvoiceId" property="invoice" javaType="com.fakecorp.invoicing.api.model.Invoice"></association>
+        <association column="itemProduct" property="product" javaType="com.fakecorp.invoicing.api.model.Product" resultMap="product"></association>
+    </resultMap>
+    
+    <resultMap id="product" type="com.fakecorp.invoicing.api.model.Product">
+        <id column="productId" property="id"/>
+        <result column="productName" property="name"/>
+        <result column="productPrice" property="price"/>
+        <result column="productDiscontinued" property="discontinued"/>
+        <result column="productCreatedAt" property="createdAt"/>
+        <result column="productUpdatedAt" property="updatedAt"/>
+    </resultMap>
+    
+    <sql id="selectInvoice">
+		SELECT
+		i.id invoiceId,
+		i.description invoiceDescription,
+		i.details invoiceDetails,
+		i.total invoiceTotal,
+		i.created_at invoiceCreatedAt,
+		i.client_id clientId,
+		it.id itemId,
+		it.amount itemAmount,
+		it.invoice_id itemInvoiceId,
+        p.id productId,
+        p.name productName,
+        p.price productPrice
+		FROM invoices i
+		LEFT JOIN invoice_items it ON it.invoice_id = i.id
+		INNER JOIN products p ON it.product_id = p.id
+	</sql>
+	
+	<select id="findAll" resultMap="invoice">
+		<include refid="selectInvoice" />
+	</select>
+	
+	<select id="findById" resultMap="invoice">
+		<include refid="selectInvoice" />
+		WHERE i.id = #{id}
+	</select>
+	
+	<select id="findByClient" resultMap="invoice">
+		<include refid="selectInvoice" />
+		WHERE c.id = #{id}
+	</select>
+
+	<insert id="insert">
+		INSERT INTO invoices(id, description, details, total, created_at, client_id)
+		VALUES(
+		#{invoice.id},
+		#{invoice.description},
+		#{invoice.details},
+		#{invoice.total},
+		#{invoice.created_at},
+		#{invoice.client_id},
+		)
+	</insert>
+	
+	<insert id="insertItem">
+		INSERT INTO invoice_items(id, amount, product_id, invoice_id)
+		VALUES(
+		#{item.id},
+		#{item.amount},
+		#{item.product_id},
+		#{item.invoice_id},
+		)
+	</insert>
+	
+	<delete id="delete">
+        DELETE FROM invoices WHERE id = #{id}
+    </delete>
+</mapper>

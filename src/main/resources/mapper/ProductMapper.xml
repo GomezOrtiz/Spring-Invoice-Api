@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.fakecorp.invoicing.api.mapper.ProductMapper">
+	
+	<resultMap id="product" type="com.fakecorp.invoicing.api.model.Product">
+        <id column="productId" property="id"/>
+        <result column="productName" property="name"/>
+        <result column="productPrice" property="price"/>
+        <result column="productDiscontinued" property="discontinued"/>
+        <result column="productCreatedAt" property="createdAt"/>
+        <result column="productUpdatedAt" property="updatedAt"/>
+    </resultMap>
+    
+    <sql id="selectProduct">
+		SELECT
+		id productId,
+		name productName,
+		price productPrice,
+		discontinued productDiscontinued,
+		created_at productCreatedAt,
+		updated_at productUpdatedAt
+		FROM products
+	</sql>
+	
+	<select id="findAll" resultMap="product">
+		<include refid="selectProduct" />
+	</select>
+	
+	<select id="findById" resultMap="product">
+		<include refid="selectProduct" />
+		WHERE id = #{id}
+	</select>
+	
+	<select id="findByName" resultMap="product">
+		<include refid="selectProduct" />
+		WHERE UPPER(name) LIKE UPPER(#{name})
+	</select>
+
+	<insert id="insert">
+		INSERT INTO products(id, name, price, discontinued, created_at, updated_at)
+		VALUES(
+		#{product.id},
+		#{product.name},
+		#{product.price},
+		#{product.discontinued},
+		#{product.createdAt},
+		#{product.updatedAt}
+		)
+	</insert>
+	
+	<update id="update">
+        UPDATE products
+          <set>
+              <if test="product.name != null and product.name != ''">name = #{product.name},</if>
+              <if test="product.price != null and product.price != ''">price = #{product.price},</if>
+              <if test="product.discontinued != null">discontinued = #{product.discontinued},</if>
+              updated_at = #{product.updatedAt}
+          </set>
+        WHERE id = #{product.id}	
+    </update>
+    
+    <update id="changeDiscontinued">
+        UPDATE products
+          <set>
+              discontinued = !(SELECT discontinued FROM products WHERE id = #{product.id})
+          </set>
+        WHERE id = #{product.id}	
+    </update>
+    
+    <delete id="delete">
+        DELETE FROM products WHERE id = #{id}
+    </delete>
+    
+
+</mapper>
